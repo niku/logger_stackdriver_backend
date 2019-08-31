@@ -48,6 +48,14 @@ defmodule LoggerStackdriverBackend do
     {line, metadata} = Keyword.pop(metadata, :line)
     {function, metadata} = Keyword.pop(metadata, :function)
 
+    # Additionaly, use request_id in metadata as insert_id on Stackdriver
+    # https://cloud.google.com/logging/docs/reference/v2/rpc/google.logging.v2#google.logging.v2.LogEntry
+    #
+    # This is often used by plug and/or phoenixframework.
+    # https://hexdocs.pm/plug/1.8.3/Plug.RequestId.html
+    {insert_id, metadata} = insert_id = Keyword.pop(metadata, :request_id)
+
+    # store rest of metadata as labels
     labels = for {k, v} <- metadata, do: {k, inspect(v)}, into: Map.new()
 
     log_entry_source_location =
@@ -60,6 +68,7 @@ defmodule LoggerStackdriverBackend do
       end
 
     %GoogleApi.Logging.V2.Model.LogEntry{
+      insertId: insert_id,
       logName: log_name_for_entry,
       resource: monitored_resource,
       timestamp: timestamp,
