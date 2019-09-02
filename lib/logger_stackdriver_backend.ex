@@ -67,6 +67,11 @@ defmodule LoggerStackdriverBackend do
         }
       end
 
+    # The type of a message is chardata which may be represented by list.
+    # https://github.com/elixir-lang/elixir/blob/v1.9.1/lib/logger/lib/logger.ex#L390
+    # To send to stackdriver, it needs to convert to string.
+    text_payload = IO.chardata_to_string(message)
+
     %GoogleApi.Logging.V2.Model.LogEntry{
       insertId: insert_id,
       logName: log_name_for_entry,
@@ -74,7 +79,7 @@ defmodule LoggerStackdriverBackend do
       timestamp: timestamp,
       severity: severity,
       labels: labels,
-      textPayload: message,
+      textPayload: text_payload,
       sourceLocation: log_entry_source_location
     }
   end
