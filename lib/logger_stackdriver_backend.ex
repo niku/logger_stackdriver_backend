@@ -13,6 +13,9 @@ defmodule LoggerStackdriverBackend do
     error: "ERROR"
   }
 
+  # 10 seconds
+  @default_interval 10_000
+
   defstruct buffer: [],
             interval: nil,
             timer_ref: nil,
@@ -87,7 +90,7 @@ defmodule LoggerStackdriverBackend do
   @impl :gen_event
   def init(__MODULE__) do
     config = Application.get_env(:logger, :logger_stackdriver_backend)
-    interval = Keyword.get(config, :interval, 10_000)
+    interval = Keyword.get(config, :interval, @default_interval)
     project_id = Keyword.get(config, :project_id)
     log_name = Keyword.get(config, :log_name)
 
