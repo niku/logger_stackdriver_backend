@@ -113,7 +113,7 @@ defmodule LoggerStackdriverBackend do
 
   @impl :gen_event
   def handle_call({:configure, _options}, %__MODULE__{} = state) do
-    # TODO
+    # TODO: configure settings
     {:ok, :ok, state}
   end
 
@@ -142,15 +142,22 @@ defmodule LoggerStackdriverBackend do
     {:ok, %{token: token}} = Goth.Token.for_scope("https://www.googleapis.com/auth/logging.write")
     conn = GoogleApi.Logging.V2.Connection.new(token)
 
-    GoogleApi.Logging.V2.Api.Entries.logging_entries_write(conn, body: request)
+    case GoogleApi.Logging.V2.Api.Entries.logging_entries_write(conn, body: request) do
+      {:ok, _} ->
+        {:ok, %{state | buffer: []}}
 
-    {:ok, %{state | buffer: []}}
+      {:error, _e} ->
+        # TODO: error handling, maybe should re-send?
+        nil
+    end
+
+    # TODO: Make sure to need to handle exception / does not need?
   end
 
   @impl :gen_event
   def handle_info(:tick, %__MODULE__{} = state) do
     timer_ref = Process.send_after(self(), :tick, state.interval)
-    :gen_event.notify(self(), :flush)
+    :ok = :gen_event.notify(self(), :flush)
     {:ok, %{state | timer_ref: timer_ref}}
   end
 
